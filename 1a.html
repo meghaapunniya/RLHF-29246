@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Rock Paper Scissors</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f9;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+      }
+      .game-container {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      .choice {
+        font-size: 40px;
+        margin: 10px;
+        transition: transform 0.3s;
+      }
+      .choice:hover {
+        transform: scale(1.1);
+      }
+      button {
+        padding: 10px 20px;
+        font-size: 16px;
+        margin: 10px;
+        cursor: pointer;
+        background-color: #5cb85c;
+        border: none;
+        color: white;
+        border-radius: 5px;
+      }
+      button:hover {
+        background-color: #4cae4c;
+      }
+      #score,
+      #round {
+        font-weight: bold;
+      }
+      @keyframes showChoice {
+        from {
+          opacity: 0;
+          transform: scale(0);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .animate-choice {
+        animation: showChoice 0.5s;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>Rock Paper Scissors</h1>
+      <div id="choices"></div>
+      <div>
+        <button onclick="play('rock')">✊</button>
+        <button onclick="play('paper')">✋</button>
+        <button onclick="play('scissors')">✌️</button>
+      </div>
+      <div>
+        Mode:
+        <select id="gameMode">
+          <option value="3">Best of 3</option>
+          <option value="5">Best of 5</option>
+          <option value="10">Best of 10</option>
+        </select>
+      </div>
+      <div id="score">Score: Player 0 - Computer 0</div>
+      <div id="round">Round: 1</div>
+      <button onclick="resetGame()">Reset</button>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script>
+      let playerScore = 0,
+        computerScore = 0,
+        currentRound = 1,
+        totalRounds;
+      const choices = ['rock', 'paper', 'scissors'];
+      let playerPatterns = {};
+
+      function computerPlay() {
+        // Simple learning mechanism - if not enough data, choose randomly
+        if (Math.random() < 0.7 || Object.keys(playerPatterns).length < 3) {
+          return choices[Math.floor(Math.random() * choices.length)];
+        } else {
+          // Predict based on past patterns, this is very basic
+          let mostCommon = Object.keys(playerPatterns).reduce((a, b) =>
+            playerPatterns[a] > playerPatterns[b] ? a : b
+          );
+          return { rock: 'paper', paper: 'scissors', scissors: 'rock' }[
+            mostCommon
+          ];
+        }
+      }
+
+      function play(playerSelection) {
+        let computerSelection = computerPlay();
+        let result = determineWinner(playerSelection, computerSelection);
+
+        // Update patterns
+        playerPatterns[playerSelection] =
+          (playerPatterns[playerSelection] || 0) + 1;
+
+        updateDisplay(playerSelection, computerSelection, result);
+        updateScore(result);
+        currentRound++;
+        if (currentRound > totalRounds) endGame();
+      }
+
+      function determineWinner(player, computer) {
+        if (player === computer) return 'Draw';
+        if (
+          (player === 'rock' && computer === 'scissors') ||
+          (player === 'paper' && computer === 'rock') ||
+          (player === 'scissors' && computer === 'paper')
+        ) {
+          return 'Player';
+        }
+        return 'Computer';
+      }
+
+      function updateDisplay(playerChoice, computerChoice, result) {
+        $('#choices').html(`
+            <span class="choice animate-choice">${
+              playerChoice === 'rock'
+                ? '✊'
+                : playerChoice === 'paper'
+                ? '✋'
+                : '✌️'
+            }</span> 
+            vs 
+            <span class="choice animate-choice">${
+              computerChoice === 'rock'
+                ? '✊'
+                : computerChoice === 'paper'
+                ? '✋'
+                : '✌️'
+            }</span>
+        `);
+        // Sound effects
+        new Howl({ src: ['click.mp3'] }).play(); // Assume click.mp3 exists for button click
+        if (result !== 'Draw')
+          new Howl({ src: [result.toLowerCase() + '-win.mp3'] }).play();
+      }
+
+      function updateScore(winner) {
+        if (winner === 'Player') playerScore++;
+        else if (winner === 'Computer') computerScore++;
+        $('#score').text(
+          `Score: Player ${playerScore} - Computer ${computerScore}`
+        );
+        $('#round').text(`Round: ${currentRound}`);
+      }
+
+      function resetGame() {
+        playerScore = computerScore = currentRound = 0;
+        totalRounds = parseInt($('#gameMode').val(), 10);
+        updateScore('Reset');
+        $('#round').text('Round: 1');
+        playerPatterns = {};
+      }
+
+      function endGame() {
+        alert(
+          playerScore > computerScore
+            ? 'You win the game!'
+            : computerScore > playerScore
+            ? 'Computer wins the game!'
+            : 'The game is a draw!'
+        );
+        resetGame();
+      }
+
+      $('#gameMode').on('change', resetGame);
+      resetGame(); // Initialize game
+    </script>
+  </body>
+</html>

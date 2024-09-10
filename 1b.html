@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rock Paper Scissors</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background: #f4f4f9;
+        text-align: center;
+        padding-top: 20px;
+      }
+      .game-area {
+        margin: 20px auto;
+        width: 80%;
+        max-width: 500px;
+      }
+      .choice-btn {
+        font-size: 1.5em;
+        margin: 5px;
+        padding: 10px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+      .choice-btn:hover {
+        transform: scale(1.1);
+      }
+      .display-choice {
+        font-size: 2em;
+        margin: 20px;
+      }
+      #score,
+      #round {
+        font-size: 1.2em;
+        margin: 10px 0;
+      }
+      .animate-choice {
+        animation: pulse 0.5s;
+      }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      select,
+      button {
+        padding: 10px;
+        font-size: 1em;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-area">
+      <h1>Rock Paper Scissors</h1>
+      <div id="player-choice" class="display-choice">👤</div>
+      <div id="ai-choice" class="display-choice">🤖</div>
+      <button class="choice-btn" onclick="play('rock')">✊</button>
+      <button class="choice-btn" onclick="play('paper')">✋</button>
+      <button class="choice-btn" onclick="play('scissors')">✌️</button>
+      <div id="score">Player: 0 | AI: 0</div>
+      <div id="round">Round: 1</div>
+      <select id="gameMode">
+        <option value="3">Best of 3</option>
+        <option value="5" selected>Best of 5</option>
+        <option value="10">Best of 10</option>
+      </select>
+      <button onclick="resetGame()">Reset Game</button>
+    </div>
+
+    <audio id="winSound" src="win.mp3" preload="auto"></audio>
+    <audio id="loseSound" src="lose.mp3" preload="auto"></audio>
+    <audio id="tieSound" src="tie.mp3" preload="auto"></audio>
+
+    <script>
+      const choices = ['rock', 'paper', 'scissors'];
+      let playerScore = 0,
+        aiScore = 0,
+        currentRound = 1,
+        maxRounds = 5;
+      let playerPattern = { rock: 0, paper: 0, scissors: 0 };
+
+      function play(playerChoice) {
+        let aiChoice = getAIChoice();
+        updateDisplay(playerChoice, aiChoice);
+        let result = determineWinner(playerChoice, aiChoice);
+        updateScore(result);
+        playSound(result);
+        currentRound++;
+        checkGameEnd();
+      }
+
+      function getAIChoice() {
+        // Simple learning algorithm
+        if (Math.random() < 0.7) {
+          // 70% chance to use learned pattern
+          let max = Math.max(
+            playerPattern.rock,
+            playerPattern.paper,
+            playerPattern.scissors
+          );
+          if (max === playerPattern.rock) return 'paper';
+          if (max === playerPattern.paper) return 'scissors';
+          return 'rock';
+        }
+        return choices[Math.floor(Math.random() * choices.length)];
+      }
+
+      function updateDisplay(player, ai) {
+        document.getElementById('player-choice').textContent = {
+          rock: '✊',
+          paper: '✋',
+          scissors: '✌️',
+        }[player];
+        document.getElementById('ai-choice').textContent = {
+          rock: '✊',
+          paper: '✋',
+          scissors: '✌️',
+        }[ai];
+        document
+          .getElementById('player-choice')
+          .classList.add('animate-choice');
+        document.getElementById('ai-choice').classList.add('animate-choice');
+        setTimeout(() => {
+          document
+            .getElementById('player-choice')
+            .classList.remove('animate-choice');
+          document
+            .getElementById('ai-choice')
+            .classList.remove('animate-choice');
+        }, 500);
+      }
+
+      function determineWinner(player, ai) {
+        if (player === ai) return 'tie';
+        if (
+          (player === 'rock' && ai === 'scissors') ||
+          (player === 'paper' && ai === 'rock') ||
+          (player === 'scissors' && ai === 'paper')
+        ) {
+          return 'win';
+        }
+        return 'lose';
+      }
+
+      function updateScore(result) {
+        if (result === 'win') playerScore++;
+        else if (result === 'lose') aiScore++;
+        document.getElementById(
+          'score'
+        ).textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+        playerPattern[
+          document.getElementById('player-choice').textContent === '✊'
+            ? 'rock'
+            : document.getElementById('player-choice').textContent === '✋'
+            ? 'paper'
+            : 'scissors'
+        ]++;
+      }
+
+      function playSound(result) {
+        document.getElementById(result + 'Sound').play();
+      }
+
+      function checkGameEnd() {
+        if (
+          currentRound > maxRounds ||
+          playerScore > maxRounds / 2 ||
+          aiScore > maxRounds / 2
+        ) {
+          setTimeout(() => {
+            alert(
+              `Game Over! ${
+                playerScore > aiScore
+                  ? 'You win!'
+                  : playerScore === aiScore
+                  ? "It's a tie!"
+                  : 'AI wins!'
+              }`
+            );
+            resetGame();
+          }, 100);
+        }
+        document.getElementById('round').textContent = `Round: ${currentRound}`;
+      }
+
+      function resetGame() {
+        playerScore = aiScore = currentRound = 0;
+        maxRounds = parseInt(document.getElementById('gameMode').value);
+        document.getElementById(
+          'score'
+        ).textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+        document.getElementById('round').textContent = `Round: ${
+          currentRound + 1
+        }`;
+        document.getElementById('player-choice').textContent = '👤';
+        document.getElementById('ai-choice').textContent = '🤖';
+      }
+
+      document.getElementById('gameMode').addEventListener('change', resetGame);
+    </script>
+  </body>
+</html>

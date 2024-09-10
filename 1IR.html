@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rock Paper Scissors</title>
+    <style>
+      body {
+        font-family: 'Roboto', sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #fff;
+        text-align: center;
+        padding-top: 20px;
+        min-height: 100vh;
+        margin: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .game-area {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        width: 90%;
+        max-width: 500px;
+      }
+
+      h1 {
+        font-size: 2.5em;
+        margin-bottom: 20px;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .choice-btn {
+        font-size: 2em;
+        margin: 10px;
+        padding: 15px 25px;
+        cursor: pointer;
+        transition: all 0.3s;
+        background: rgba(255, 255, 255, 0.2);
+        border: none;
+        border-radius: 50px;
+        color: #fff;
+      }
+
+      .choice-btn:hover {
+        transform: scale(1.1);
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .display-choice {
+        font-size: 3em;
+        margin: 20px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s;
+      }
+
+      #score,
+      #round {
+        font-size: 1.2em;
+        margin: 15px 0;
+        font-weight: bold;
+      }
+
+      .animate-choice {
+        animation: pulse 0.5s;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+        }
+
+        50% {
+          transform: scale(1.2);
+        }
+
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      select,
+      button {
+        padding: 10px 20px;
+        font-size: 1em;
+        margin-top: 15px;
+        border: none;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      select:hover,
+      button:hover {
+        color: #000;
+        background: rgba(255, 255, 255, 0.9);
+      }
+
+      select:focus {
+        outline: #764ba2;
+      }
+
+      select {
+        color: #fff;
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      option {
+        color: #000;
+        background: #fff;
+      }
+
+      .choices-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+      }
+
+      .game-over-message {
+        font-size: 2em;
+        margin-top: 30px;
+      }
+
+      .play-again-btn {
+        font-size: 1.5em;
+        padding: 10px 20px;
+        margin-top: 20px;
+        background-color: rgba(255, 255, 255, 0.3);
+        color: #fff;
+        border-radius: 50px;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s;
+      }
+
+      .play-again-btn:hover {
+        background-color: rgba(255, 255, 255, 0.6);
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="game-area"></div>
+
+    <audio
+      id="winSound"
+      src="https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="loseSound"
+      src="https://assets.mixkit.co/active_storage/sfx/2026/2026-preview.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="tieSound"
+      src="https://assets.mixkit.co/active_storage/sfx/3137/3137-preview.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="gameoverSound"
+      src="https://assets.mixkit.co/active_storage/sfx/470/470-preview.mp3"
+      preload="auto"
+    ></audio>
+
+    <script>
+      const choices = ['rock', 'paper', 'scissors'];
+      let playerScore = 0,
+        aiScore = 0,
+        currentRound = 1,
+        maxRounds = 5;
+      let playerPattern = { rock: 0, paper: 0, scissors: 0 };
+
+      function play(playerChoice) {
+        if (currentRound <= maxRounds) {
+          let aiChoice = getAIChoice();
+          updateDisplay(playerChoice, aiChoice);
+          let result = determineWinner(playerChoice, aiChoice);
+          updateScore(result);
+          playSound(result);
+          currentRound++;
+          checkGameEnd();
+        }
+      }
+
+      function getAIChoice() {
+        if (Math.random() < 0.7) {
+          let max = Math.max(
+            playerPattern.rock,
+            playerPattern.paper,
+            playerPattern.scissors
+          );
+          if (max === playerPattern.rock) return 'paper';
+          if (max === playerPattern.paper) return 'scissors';
+          return 'rock';
+        }
+        return choices[Math.floor(Math.random() * choices.length)];
+      }
+
+      function updateDisplay(player, ai) {
+        const playerChoiceEl = document.getElementById('player-choice');
+        const aiChoiceEl = document.getElementById('ai-choice');
+
+        if (playerChoiceEl && aiChoiceEl) {
+          document.getElementById('player-choice').textContent = {
+            rock: '✊',
+            paper: '✋',
+            scissors: '✌️',
+          }[player];
+          document.getElementById('ai-choice').textContent = {
+            rock: '✊',
+            paper: '✋',
+            scissors: '✌️',
+          }[ai];
+
+          playerChoiceEl.classList.add('animate-choice');
+          aiChoiceEl.classList.add('animate-choice');
+          setTimeout(() => {
+            playerChoiceEl.classList.remove('animate-choice');
+            aiChoiceEl.classList.remove('animate-choice');
+          }, 500);
+        }
+      }
+
+      function determineWinner(player, ai) {
+        if (player === ai) return 'tie';
+        if (
+          (player === 'rock' && ai === 'scissors') ||
+          (player === 'paper' && ai === 'rock') ||
+          (player === 'scissors' && ai === 'paper')
+        ) {
+          return 'win';
+        }
+        return 'lose';
+      }
+
+      function updateScore(result) {
+        if (result === 'win') playerScore++;
+        else if (result === 'lose') aiScore++;
+        document.getElementById(
+          'score'
+        ).textContent = `Player: ${playerScore} | AI: ${aiScore}`;
+        playerPattern[
+          document.getElementById('player-choice').textContent === '✊'
+            ? 'rock'
+            : document.getElementById('player-choice').textContent === '✋'
+            ? 'paper'
+            : 'scissors'
+        ]++;
+      }
+
+      function playSound(result) {
+        if (result === 'win') document.getElementById('winSound').play();
+        else if (result === 'lose') document.getElementById('loseSound').play();
+        else document.getElementById('tieSound').play();
+      }
+
+      function checkGameEnd() {
+        if (currentRound > maxRounds) {
+          document.getElementById('gameoverSound').play();
+          let gameResult = `Game Over! ${
+            playerScore > aiScore
+              ? 'You win 🎉'
+              : playerScore < aiScore
+              ? 'You lose 😞'
+              : "It's a tie 🤝"
+          }`;
+          document.querySelector(
+            '.game-area'
+          ).innerHTML = `<div class="game-over-message">${gameResult}</div>
+          <button class="play-again-btn" onclick="resetGame()">Play Again</button>`;
+        } else {
+          document.getElementById(
+            'round'
+          ).textContent = `Round: ${currentRound} / ${maxRounds}`;
+        }
+      }
+
+      function resetGame() {
+        playerScore = 0;
+        aiScore = 0;
+        currentRound = 1;
+        playerPattern = { rock: 0, paper: 0, scissors: 0 };
+
+        document.querySelector('.game-area').innerHTML = `
+    <h1>Rock Paper Scissors</h1>
+    <div id="player-choice" class="display-choice">👤</div>
+    <div id="ai-choice" class="display-choice">🤖</div>
+    <div class="choices-container">
+      <button class="choice-btn" onclick="play('rock')">✊</button>
+      <button class="choice-btn" onclick="play('paper')">✋</button>
+      <button class="choice-btn" onclick="play('scissors')">✌️</button>
+    </div>
+    <div id="score">Player: 0 | AI: 0</div>
+    <div id="round">Round: 1 / ${maxRounds}</div>
+    <select id="gameMode">
+      <option value="3">Best of 3</option>
+      <option value="5" selected>Best of 5</option>
+      <option value="10">Best of 10</option>
+    </select>
+    <button onclick="resetGame()">Reset Game</button>`;
+        // Re-add event listener after resetting the game
+        document
+          .getElementById('gameMode')
+          .addEventListener('change', (event) => {
+            maxRounds = parseInt(event.target.value);
+            resetGame();
+          });
+      }
+
+      // Initialize the game mode event listener on page load
+      document.addEventListener('DOMContentLoaded', () => {
+        // Initialize the game area
+        resetGame();
+      });
+    </script>
+  </body>
+</html>
