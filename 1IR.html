@@ -309,22 +309,24 @@
     <div id="round">Round: 1 / ${maxRounds}</div>
     <select id="gameMode">
       <option value="3">Best of 3</option>
-      <option value="5" selected>Best of 5</option>
+      <option value="5">Best of 5</option>
       <option value="10">Best of 10</option>
     </select>
     <button onclick="resetGame()">Reset Game</button>`;
+
+        // Set the correct option as selected
+        const gameModeSelect = document.getElementById('gameMode');
+        gameModeSelect.value = maxRounds;
+
         // Re-add event listener after resetting the game
-        document
-          .getElementById('gameMode')
-          .addEventListener('change', (event) => {
-            maxRounds = parseInt(event.target.value);
-            resetGame();
-          });
+        gameModeSelect.addEventListener('change', (event) => {
+          maxRounds = parseInt(event.target.value);
+          resetGame();
+        });
       }
 
-      // Initialize the game mode event listener on page load
+      // Initialize the game area on page load
       document.addEventListener('DOMContentLoaded', () => {
-        // Initialize the game area
         resetGame();
       });
     </script>
